@@ -1,34 +1,78 @@
 ---
 title: "Example Ordering"
-description: "LLM outputs are heavily impacted by ordering of few shot examples"
+description: "LLMs can be sensitive to the order of examples in prompts."
 ---
 
-# Example Ordering
+Does the order of in-context examples affect your task's output? If so, which ordering provides the best output?
 
-The order of few-shot examples in the prompt can affect LLM outputs <sup><a href="https://arxiv.org/abs/2104.08786">1</a><a href="https://arxiv.org/abs/2106.01751">2</a><a href="https://arxiv.org/abs/2101.06804">3</a><a href="https://aclanthology.org/2022.naacl-main.191/">4</a></sup><sup><a href="https://arxiv.org/abs/2406.06608">\*</a></sup>. Consider permutating the order of these examples in your prompt to achieve better results.
+LLMs can be sensitive to the order of examples in prompts<sup><a href="https://arxiv.org/abs/2104.08786">1</a><a href="https://arxiv.org/abs/2106.01751">2</a><a href="https://arxiv.org/abs/2101.06804">3</a><a href="https://aclanthology.org/2022.naacl-main.191/">4</a></sup>. The script below uses `instructor` to test different example permutations and see how the output changes.
 
-## Choosing Your Examples
+## Implementation
 
-Depending on your use-case, here are a few different methods that you can consider using to improve the quality of your examples.
+```python
+from pydantic import BaseModel
+import instructor
+from openai import OpenAI
+from itertools import permutations
 
-### Combinatorics
+client = instructor.from_openai(OpenAI())
 
-One of the easiest methods is for us to manually iterate over each of the examples that we have and try all possible combinations we could create. This will in turn allow us to find the best combination that we can find.
 
-### KATE
+class Example(BaseModel):  # (1)!
+    input: str
+    output: str
 
-KATE (k-Nearest Example Tuning) is a method designed to enhance GPT-3's performance by selecting the most relevant in-context examples. The method involves:
 
-For each example in the test set, K nearest neighbors (examples) are retrieved based on semantic similarity.
-Among these K examples, those that appear most frequently across different queries are selected as the best in-context examples.
+class Response(BaseModel):
+    response: str
 
-### Using a Unsupervised Retriever
 
-![Retriever Image](../../img/retriever.png)
+def inference(examples, query):
+    return client.chat.completions.create(
+        model="gpt-4o",
+        response_model=Response,
+        messages=[
+            {
+                "role": "user",
+                "content": f"{examples} {query}",  # (2)!
+            }
+        ],
+    ).response
 
-We can use a large LLM to compute a single score for each example with respect to a given prompt. This allows us to create a training set that scores an example's relevance when compared against a prompt. Using this training set, we can train a model that mimics this functionality. This allows us to determine the top `k` most relevant and most irrelevant examples when a user makes a query so that we can include this in our final prompt.
 
-### References
+if __name__ == "__main__":
+    examples = [
+        Example(input="The movie was so good", output="positive"),
+        Example(input="The movie was somewhat good", output="negative"),
+    ]
+    query = "The movie was okay"
+
+    permutations = list(permutations(examples))
+    results = [inference(permutation, query) for permutation in permutations]
+    print(permutations)
+    """
+    [
+        (
+            Example(input='The movie was so good', output='positive'),
+            Example(input='The movie was somewhat good', output='negative'),
+        ),
+        (
+            Example(input='The movie was somewhat good', output='negative'),
+            Example(input='The movie was so good', output='positive'),
+        ),
+    ]
+    """
+    print(results)
+    #> ['negative', 'positive']
+```
+
+1. This class can be customized to a specific task
+2. This prompt can be customized to a specific task
+
+!!! info
+    For scenarios with a large number of examples, check out example selection techniques ([KNN](https://python.useinstructor.com/prompting/few_shot/exemplar_selection/knn/), [Vote-K](https://python.useinstructor.com/prompting/few_shot/exemplar_selection/vote_k/)).
+
+## References
 
 <sup id="ref-1">1</sup>: [Fantastically Ordered Prompts and Where to Find Them: Overcoming Few-Shot Prompt Order Sensitivity](https://arxiv.org/abs/2104.08786)
 
@@ -37,5 +81,3 @@ We can use a large LLM to compute a single score for each example with respect t
 <sup id="ref-2">3</sup>: [What Makes Good In-Context Examples for GPT-3?](https://arxiv.org/abs/2101.06804)
 
 <sup id="ref-3">4</sup>: [Learning To Retrieve Prompts for In-Context Learning](https://aclanthology.org/2022.naacl-main.191/)
-
-<sup id="ref-asterisk">\*</sup>: [The Prompt Report: A Systematic Survey of Prompting Techniques](https://arxiv.org/abs/2406.06608)

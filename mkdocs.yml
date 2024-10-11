@@ -235,8 +235,8 @@ nav:
       - Generate Follow-Up Questions: 'prompting/zero_shot/self_ask.md'
     - Few-Shot:
       - Example Generation:
-        - Generate In-Context Examples: 'prompting/few_shot/example_generation/sg_icl.md'
-      - Example Ordering: 'prompting/few_shot/example_ordering.md'
+        - Generate Examples: 'prompting/few_shot/example_generation/sg_icl.md'
+      - Order Examples: 'prompting/few_shot/example_ordering.md'
       - Exemplar Selection:
         - Select Effective Examples: 'prompting/few_shot/exemplar_selection/knn.md'
         - Vote-K: 'prompting/few_shot/exemplar_selection/vote_k.md'

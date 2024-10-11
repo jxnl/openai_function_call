@@ -1,115 +1,100 @@
 ---
 title: "Generate In-Context Examples"
-description: ""
+description: "If we do not have examples for our task, we can utilize *self-generated* in-context learning (SG-ICL), where we use a model to generate in-context examples."
 ---
 
-How can we generate examples for our prompt?
+How can we generate examples of our task to improve model outputs?
 
-Self-Generated In-Context Learning (SG-ICL) is a technique which uses an LLM to generate examples to be used during the task. This allows for in-context learning, where examples of the task are provided in the prompt.
+In-context learning is a prompting technique where examples are provided in the prompt for the model to learn from at inference time. If we do not already have examples for our task, we can utilize *self-generated* in-context learning (SG-ICL), where we use a model to generate these in-context examples.
 
-We can implement SG-ICL using `instructor` as seen below.
+## Implementation
 
 ```python
 import instructor
-from pydantic import BaseModel
 from openai import OpenAI
-from typing import Literal
-
-n = 4  # num examples to generate per class
+from pydantic import BaseModel
 
 
-class GeneratedReview(BaseModel):
-    review: str
-    sentiment: Literal["positive", "negative"]
+class GeneratedExample(BaseModel):
+    input: str
+    output: str
 
 
-class SentimentPrediction(BaseModel):
-    sentiment: Literal["positive", "negative"]
+class Response(BaseModel):
+    output: str
 
 
 client = instructor.from_openai(OpenAI())
 
 
-def generate_sample(input_review, sentiment):
+def generate_example(task, input, case):
     return client.chat.completions.create(
         model="gpt-4o",
-        response_model=GeneratedReview,
+        response_model=GeneratedExample,
         messages=[
             {
                 "role": "user",
                 "content": f"""
-                           Generate a '{sentiment}' review similar to: {input_review}
-                           Generated review:
+                           Generate an example for this task
+                           {task}
+                           that has this output
+                           {case}
+                           similar to this input
+                           {input}
                            """,
             }
         ],
     )
 
 
-def predict_sentiment(input_review, in_context_samples):
+def inference(examples, task, input):
     return client.chat.completions.create(
         model="gpt-4o",
-        response_model=SentimentPrediction,
+        response_model=Response,
         messages=[
             {
                 "role": "user",
-                "content": "".join(
-                    [
-                        f"Review: {sample.review}\nSentiment: {sample.sentiment}\n\n"
-                        for sample in in_context_samples
-                    ]
-                )
-                + f"Review: {input_review}\nSentiment:",
+                "content": f"""
+                           {examples}
+                           {task}
+                           {input}
+                           """,
             }
         ],
-    ).sentiment
+    )
 
 
 if __name__ == "__main__":
-    input_review = (
-        "This movie was a rollercoaster of emotions, keeping me engaged throughout."
-    )
+    task = "Predict the sentiment of the following text:"
+    input = "This movie was a rollercoaster of emotions, keeping me engaged throughout."
+    example_cases = ["positive", "negative"]
 
-    # Generate in-context samples
-    samples = [
-        generate_sample(input_review, sentiment)
-        for sentiment in ('positive', 'negative')
-        for _ in range(n)
-    ]
-    for sample in samples:
-        print(sample)
+    examples = [
+        generate_example(task, input, case)
+        for case in example_cases
+        for _ in range(2)
+    ]  # Generate 2 examples per case
+
+    for example in examples:
+        print(example)
         """
-        review='This film was an emotional journey, keeping me captivated from start to finish.' sentiment='positive'
-        """
-        """
-        review='This film was an emotional journey, captivating me from start to finish.' sentiment='positive'
+        input='The performance of the lead actor was stellar, leaving a lasting impression.' output='positive'
         """
         """
-        review='This film captivated me from start to finish with its thrilling plot and emotional depth.' sentiment='positive'
+        input="The weather today has been absolutely wonderful, lifting everyone's spirits." output='positive'
         """
         """
-        review='This movie was a breathtaking journey, capturing my attention from start to finish.' sentiment='positive'
+        input='The meal was overpriced and underwhelming, not worth the hype.' output='negative'
         """
         """
-        review='This movie was a chaotic mess of emotions, losing me at every turn.' sentiment='negative'
-        """
-        """
-        review='This movie was a confusing mess, leaving me disengaged throughout.' sentiment='negative'
-        """
-        """
-        review='This movie was a chore to sit through, leaving me bored most of the time.' sentiment='negative'
-        """
-        """
-        review='This movie was a mishmash of confusing scenes, leaving me frustrated throughout.' sentiment='negative'
+        input='The customer service experience was frustrating and disappointing.' output='negative'
         """
 
-    # Predict sentiment
-    print(predict_sentiment(input_review, samples))
-    #> positive
+    print(inference(examples, task, input))
+    #> output='positive'
 ```
 
-### References
+## References
 
 <sup id="ref-1">1</sup>: [Self-Generated In-Context Learning: Leveraging Auto-regressive Language Models as a Demonstration Generator](https://arxiv.org/abs/2206.08082)
 
-<sup id="ref-asterisk">\*</sup>: [The Prompt Report: A Systematic Survey of Prompting Techniques](https://arxiv.org/abs/2406.06608)

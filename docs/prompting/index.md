@@ -33,8 +33,8 @@ How do we increase the performance of our model without any examples?
 
 How do we choose effective examples to include in our prompt?
 
-1. [Auto-Generate Examples](few_shot/example_generation/sg_icl.md)
-2. [Re-Order Examples](few_shot/example_ordering.md)
+1. [Generate Examples](few_shot/example_generation/sg_icl.md)
+2. [Order Examples](few_shot/example_ordering.md)
 3. [Choose Examples Similar to the Query (KNN)](few_shot/exemplar_selection/knn.md)
 4. [Choose Examples Similar to the Query (Vote-K)](few_shot/exemplar_selection/vote_k.md)
 
