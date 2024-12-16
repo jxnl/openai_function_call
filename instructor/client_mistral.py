@@ -1,58 +1,65 @@
-# Future imports to ensure compatibility with Python 3.9
+# type: ignore
 from __future__ import annotations
 
+from typing import Any, Literal, overload, TypeVar
 
-from mistralai import Mistral
+from mistralai.client import MistralClient
+
 import instructor
-from typing import overload, Any, Literal
+from instructor.mode import Mode
+from instructor.utils import Provider
 
-
-@overload
-def from_mistral(
-    client: Mistral,
-    mode: instructor.Mode = instructor.Mode.MISTRAL_TOOLS,
-    use_async: Literal[False] = False,
-    **kwargs: Any,
-) -> instructor.Instructor: ...
-
+T = TypeVar("T")
 
 @overload
 def from_mistral(
-    client: Mistral,
-    mode: instructor.Mode = instructor.Mode.MISTRAL_TOOLS,
+    client: MistralClient,
+    mode: Mode = Mode.MISTRAL_JSON,
     use_async: Literal[True] = True,
     **kwargs: Any,
 ) -> instructor.AsyncInstructor: ...
 
 
+@overload
 def from_mistral(
-    client: Mistral,
-    mode: instructor.Mode = instructor.Mode.MISTRAL_TOOLS,
+    client: MistralClient,
+    mode: Mode = Mode.MISTRAL_JSON,
+    use_async: Literal[False] = False,
+    **kwargs: Any,
+) -> instructor.Instructor: ...
+
+
+def from_mistral(
+    client: MistralClient,
+    mode: Mode = Mode.MISTRAL_JSON,
     use_async: bool = False,
     **kwargs: Any,
-) -> instructor.Instructor | instructor.AsyncInstructor:
+) -> instructor.AsyncInstructor | instructor.Instructor:
+    """Create a patched Mistral client."""
     assert mode in {
-        instructor.Mode.MISTRAL_TOOLS,
-    }, "Mode be one of {instructor.Mode.MISTRAL_TOOLS}"
+        Mode.MISTRAL_TOOLS,
+        Mode.MISTRAL_JSON,
+    }, f"Mode must be one of {Mode.MISTRAL_TOOLS}, {Mode.MISTRAL_JSON}"
 
     assert isinstance(
-        client, Mistral
-    ), "Client must be an instance of mistralai.Mistral"
+        client, MistralClient
+    ), "Client must be an instance of mistralai.MistralClient"
 
-    if not use_async:
-        return instructor.Instructor(
-            client=client,
-            create=instructor.patch(create=client.chat.complete, mode=mode),
-            provider=instructor.Provider.MISTRAL,
-            mode=mode,
-            **kwargs,
-        )
-
-    else:
+    if use_async:
+        create = client.chat.create_async
         return instructor.AsyncInstructor(
             client=client,
-            create=instructor.patch(create=client.chat.complete_async, mode=mode),
-            provider=instructor.Provider.MISTRAL,
+            create=instructor.patch(create=create, mode=mode),
+            provider=Provider.MISTRAL,
             mode=mode,
             **kwargs,
         )
+
+    create = client.chat.create
+    return instructor.Instructor(
+        client=client,
+        create=instructor.patch(create=create, mode=mode),
+        provider=Provider.MISTRAL,
+        mode=mode,
+        **kwargs,
+    )

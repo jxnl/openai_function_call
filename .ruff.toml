@@ -46,6 +46,8 @@ ignore = [
   # mutable defaults
   "B006",
   "B018",
+  # ignore union syntax warnings for Python 3.9 compatibility
+  "UP007",
 ]
 
 unfixable = [

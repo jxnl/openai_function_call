@@ -1,6 +1,6 @@
 from typing import Any, Union, TypeVar, Optional
 from collections.abc import Iterable
-from pydantic import BaseModel, Field  # type: ignore
+from pydantic import BaseModel, Field
 from instructor.process_response import handle_response_model
 import instructor
 import uuid
@@ -139,7 +139,7 @@ class BatchJob:
                             "temperature": temperature,
                             "messages": messages,
                             **kwargs,
-                        }
+                        },
                     }
                     file.write(json.dumps(request) + "\n")
         else:

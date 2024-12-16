@@ -37,7 +37,7 @@ Welcome to our collection of cookbooks showcasing the power of structured output
 26. [Action Items Extraction](action_items.md): Extract structured action items and tasks from text content.
 27. [Batch Classification with LangSmith](batch_classification_langsmith.md): Efficiently classify content in batches using LangSmith integration.
 28. [Contact Information Extraction](extract_contact_info.md): Extract structured contact details from unstructured text.
-29. [Knowledge Graph Building](building_knowledge_graph.md): Create and manipulate knowledge graphs from textual data.
+29. [Knowledge Graph Building](building_knowledge_graphs.md): Create and manipulate knowledge graphs from textual data.
 30. [Multiple Classification Tasks](multiple_classification.md): Handle multiple classification categories simultaneously.
 31. [Pandas DataFrame Integration](pandas_df.md): Work with structured data using Pandas DataFrames.
 32. [Partial Response Streaming](partial_streaming.md): Stream partial results for real-time processing.

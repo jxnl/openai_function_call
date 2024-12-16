@@ -9,6 +9,7 @@ class Mode(enum.Enum):
     PARALLEL_TOOLS = "parallel_tool_call"
     TOOLS = "tool_call"
     MISTRAL_TOOLS = "mistral_tools"
+    MISTRAL_JSON = "mistral_json"  # Add support for Mistral's Pixtral model
     JSON = "json_mode"
     JSON_O1 = "json_o1"
     MD_JSON = "markdown_json_mode"

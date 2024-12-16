@@ -326,6 +326,70 @@ assert resp.name == "Jason"
 assert resp.age == 25
 ```
 
+### Using Mistral Models with Multimodal Support
+
+Make sure to install `mistralai` and set your system environment variable with `export MISTRAL_API_KEY=<YOUR_MISTRAL_API_KEY>`.
+
+```bash
+pip install mistralai
+```
+
+```python
+import instructor
+from mistralai import MistralClient
+from instructor.multimodal import Image
+from pydantic import BaseModel, Field
+
+
+class ImageAnalysis(BaseModel):
+    description: str = Field(..., description="A detailed description of the image")
+    objects: list[str] = Field(..., description="List of objects identified in the image")
+    colors: list[str] = Field(..., description="List of dominant colors in the image")
+
+
+# Initialize the Mistral client with Instructor
+client = instructor.from_mistral(
+    MistralClient(api_key="your-api-key"),
+    mode=instructor.Mode.MISTRAL_JSON
+)
+
+# Analyze an image using Pixtral model
+analysis = client.chat.completions.create(
+    model="pixtral-12b-2409",
+    messages=[
+        {
+            "role": "user",
+            "content": [
+                {"type": "text", "text": "What's in this image? List the objects and colors."},
+                Image.from_url("https://example.com/image.jpg")  # You can also use Image.from_path()
+            ]
+        }
+    ],
+    response_model=ImageAnalysis,
+)
+
+print(f"Description: {analysis.description}")
+print(f"Objects: {', '.join(analysis.objects)}")
+print(f"Colors: {', '.join(analysis.colors)}")
+
+# Example with multiple images
+images = [
+    Image.from_url("https://example.com/image1.jpg"),
+    Image.from_url("https://example.com/image2.jpg"),
+]
+
+analysis = client.chat.completions.create(
+    model="pixtral-12b-2409",
+    messages=[
+        {
+            "role": "user",
+            "content": ["Describe these images"] + images,
+        }
+    ],
+    response_model=ImageAnalysis,
+)
+```
+
 ## Types are inferred correctly
 
 This was the dream of Instructor but due to the patching of OpenAI, it wasn't possible for me to get typing to work well. Now, with the new client, we can get typing to work well! We've also added a few `create_*` methods to make it easier to create iterables and partials, and to access the original completion.

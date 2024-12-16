@@ -1,7 +1,7 @@
 from typing import Any, Optional, cast, ClassVar
 from collections.abc import AsyncGenerator, Generator, Iterable
 
-from pydantic import BaseModel, Field, create_model  # type: ignore
+from pydantic import BaseModel, Field, create_model
 
 from instructor.function_calls import OpenAISchema
 from instructor.mode import Mode
@@ -109,7 +109,12 @@ class IterableBase:
                     }:
                         if json_chunk := chunk.choices[0].delta.content:
                             yield json_chunk
-                    elif mode in {Mode.TOOLS, Mode.TOOLS_STRICT, Mode.FIREWORKS_TOOLS, Mode.WRITER_TOOLS}:
+                    elif mode in {
+                        Mode.TOOLS,
+                        Mode.TOOLS_STRICT,
+                        Mode.FIREWORKS_TOOLS,
+                        Mode.WRITER_TOOLS,
+                    }:
                         if json_chunk := chunk.choices[0].delta.tool_calls:
                             if json_chunk[0].function.arguments is not None:
                                 yield json_chunk[0].function.arguments
@@ -145,7 +150,12 @@ class IterableBase:
                     }:
                         if json_chunk := chunk.choices[0].delta.content:
                             yield json_chunk
-                    elif mode in {Mode.TOOLS, Mode.TOOLS_STRICT, Mode.FIREWORKS_TOOLS, Mode.WRITER_TOOLS}:
+                    elif mode in {
+                        Mode.TOOLS,
+                        Mode.TOOLS_STRICT,
+                        Mode.FIREWORKS_TOOLS,
+                        Mode.WRITER_TOOLS,
+                    }:
                         if json_chunk := chunk.choices[0].delta.tool_calls:
                             if json_chunk[0].function.arguments is not None:
                                 yield json_chunk[0].function.arguments

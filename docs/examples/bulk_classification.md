@@ -268,6 +268,85 @@ async def tag_request(request: TagRequest) -> TagResponse:
         predictions=predictions,
     )
 
+## working-with-dataframes
+
+When working with large datasets, it's often convenient to use pandas DataFrames. Here's how you can integrate this classification system with pandas:
+
+```python
+import pandas as pd
+
+async def classify_dataframe(df: pd.DataFrame, text_column: str, tags: List[TagWithInstructions]) -> pd.DataFrame:
+    request = TagRequest(
+        texts=df[text_column].tolist(),
+        tags=tags
+    )
+    response = await tag_request(request)
+    df['predicted_tag'] = [pred.name for pred in response.predictions]
+    return df
+```
+
+## streaming-responses
+
+For real-time processing, you can stream responses as they become available:
+
+```python
+async def stream_classifications(texts: List[str], tags: List[TagWithInstructions]):
+    async def process_single(text: str):
+        prediction = await tag_single_request(text, tags)
+        return {"text": text, "prediction": prediction}
+
+    tasks = [process_single(text) for text in texts]
+    for completed in asyncio.as_completed(tasks):
+        yield await completed
+```
+
+## Single-Label Classification
+
+For simple classification tasks where each text belongs to exactly one category:
+
+```python
+async def classify_single_label(text: str, tags: List[TagWithInstructions]) -> Tag:
+    return await tag_single_request(text, tags)
+```
+
+## Multi-Label Classification
+
+For cases where texts might belong to multiple categories:
+
+```python
+class MultiLabelTag(BaseModel):
+    tags: List[Tag]
+
+    @model_validator(mode="after")
+    def validate_tags(self, info: ValidationInfo):
+        context = info.context
+        if context and context.get("tags"):
+            valid_tags = context["tags"]
+            for tag in self.tags:
+                assert tag.id in {t.id for t in valid_tags}, f"Tag ID {tag.id} not found"
+                assert tag.name in {t.name for t in valid_tags}, f"Tag name {tag.name} not found"
+        return self
+
+async def classify_multi_label(text: str, tags: List[TagWithInstructions]) -> List[Tag]:
+    response = await client.chat.completions.create(
+        model="gpt-4",
+        messages=[
+            {"role": "system", "content": "You are a multi-label classification system."},
+            {"role": "user", "content": f"Classify this text into multiple categories: {text}"},
+            {"role": "user", "content": f"Available categories: {', '.join(t.name for t in tags)}"},
+        ],
+        response_model=MultiLabelTag,
+        validation_context={"tags": tags},
+    )
+    return response.tags
+```
+
+# Example Usage
+
+```python
+# PLACEHOLDER: existing example code
+```
+
 
 # <%hide%>
 tags = [

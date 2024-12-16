@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, model_validator, ValidationInfo  # type: ignore
+from pydantic import BaseModel, Field, model_validator, ValidationInfo
 from collections.abc import Generator
 
 
@@ -57,7 +57,7 @@ class CitationMixin(BaseModel):
         description="List of unique and specific substrings of the quote that was used to answer the question.",
     )
 
-    @model_validator(mode="after")  # type: ignore[misc]
+    @model_validator(mode="after")
     def validate_sources(self, info: ValidationInfo) -> "CitationMixin":
         """
         For each substring_phrase, find the span of the substring_phrase in the context.
