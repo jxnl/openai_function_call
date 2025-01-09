@@ -131,6 +131,9 @@ def patch(  # type: ignore
 
     logger.debug(f"Patching `client.chat.completions.create` with {mode=}")
 
+    # TODO: remove this
+    print(f"instructor.patch: patching {create.__name__}")
+
     if create is not None:
         func = create
     elif client is not None:
@@ -183,7 +186,7 @@ def patch(  # type: ignore
         **kwargs: T_ParamSpec.kwargs,
     ) -> T_Model:
         context = handle_context(context, validation_context)
-
+        print(f"instructor.patch: patched_function {func.__name__}")
         response_model, new_kwargs = handle_response_model(
             response_model=response_model, mode=mode, **kwargs
         )  # type: ignore
@@ -228,6 +231,8 @@ def apatch(client: AsyncOpenAI, mode: Mode = Mode.TOOLS) -> AsyncOpenAI:
     import warnings
 
     warnings.warn(
-        "apatch is deprecated, use patch instead", DeprecationWarning, stacklevel=2
+        "apatch is deprecated, use patch instead",
+        DeprecationWarning,
+        stacklevel=2,
     )
     return patch(client, mode=mode)

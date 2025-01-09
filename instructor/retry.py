@@ -4,13 +4,16 @@ from __future__ import annotations
 
 import logging
 from json import JSONDecodeError
-from typing import Any, Callable, TypeVar
+from typing import Any, Callable, TypeVar, Union
 
 from instructor.exceptions import InstructorRetryException
 from instructor.hooks import Hooks
 from instructor.mode import Mode
 from instructor.reask import handle_reask_kwargs
-from instructor.process_response import process_response, process_response_async
+from instructor.process_response import (
+    process_response,
+    process_response_async,
+)
 from instructor.utils import update_total_usage
 from instructor.validators import AsyncValidationError
 from openai.types.chat import ChatCompletion
@@ -37,7 +40,9 @@ T_ParamSpec = ParamSpec("T_ParamSpec")
 T = TypeVar("T")
 
 
-def initialize_retrying(max_retries: int | Retrying | AsyncRetrying, is_async: bool):
+def initialize_retrying(
+    max_retries: int | Retrying | AsyncRetrying, is_async: bool
+):
     """
     Initialize the retrying mechanism based on the type (synchronous or asynchronous).
 
@@ -82,7 +87,9 @@ def initialize_usage(mode: Mode) -> CompletionUsage | Any:
         completion_tokens_details=CompletionTokensDetails(
             audio_tokens=0, reasoning_tokens=0
         ),
-        prompt_tokens_details=PromptTokensDetails(audio_tokens=0, cached_tokens=0),
+        prompt_tokens_details=PromptTokensDetails(
+            audio_tokens=0, cached_tokens=0
+        ),
     )
     if mode in {Mode.ANTHROPIC_TOOLS, Mode.ANTHROPIC_JSON}:
         from anthropic.types import Usage as AnthropicUsage
@@ -150,7 +157,9 @@ def retry_sync(
         response = None
         for attempt in max_retries:
             with attempt:
-                logger.debug(f"Retrying, attempt: {attempt.retry_state.attempt_number}")
+                logger.debug(
+                    f"Retrying, attempt: {attempt.retry_state.attempt_number}"
+                )
                 try:
                     hooks.emit_completion_arguments(*args, **kwargs)
                     response = func(*args, **kwargs)
@@ -158,6 +167,10 @@ def retry_sync(
                     response = update_total_usage(
                         response=response, total_usage=total_usage
                     )
+
+                    # TODO: remove this
+                    print(f"instructor.retry.py: {response}")
+
                     return process_response(  # type: ignore
                         response=response,
                         response_model=response_model,
@@ -184,7 +197,8 @@ def retry_sync(
             n_attempts=attempt.retry_state.attempt_number,
             #! deprecate messages soon
             messages=kwargs.get(
-                "messages", kwargs.get("contents", kwargs.get("chat_history", []))
+                "messages",
+                kwargs.get("contents", kwargs.get("chat_history", [])),
             ),
             create_kwargs=kwargs,
             total_usage=total_usage,
@@ -229,7 +243,9 @@ async def retry_async(
     try:
         response = None
         async for attempt in max_retries:
-            logger.debug(f"Retrying, attempt: {attempt.retry_state.attempt_number}")
+            logger.debug(
+                f"Retrying, attempt: {attempt.retry_state.attempt_number}"
+            )
             with attempt:
                 try:
                     hooks.emit_completion_arguments(*args, **kwargs)
@@ -247,7 +263,11 @@ async def retry_async(
                         mode=mode,
                         stream=kwargs.get("stream", False),
                     )
-                except (ValidationError, JSONDecodeError, AsyncValidationError) as e:
+                except (
+                    ValidationError,
+                    JSONDecodeError,
+                    AsyncValidationError,
+                ) as e:
                     logger.debug(f"Parse error: {e}")
                     hooks.emit_parse_error(e)
                     kwargs = handle_reask_kwargs(
@@ -265,7 +285,8 @@ async def retry_async(
             n_attempts=attempt.retry_state.attempt_number,
             #! deprecate messages soon
             messages=kwargs.get(
-                "messages", kwargs.get("contents", kwargs.get("chat_history", []))
+                "messages",
+                kwargs.get("contents", kwargs.get("chat_history", [])),
             ),
             create_kwargs=kwargs,
             total_usage=total_usage,

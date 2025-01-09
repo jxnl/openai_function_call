@@ -55,6 +55,7 @@ class Provider(Enum):
     FIREWORKS = "fireworks"
     WRITER = "writer"
     UNKNOWN = "unknown"
+    BEDROCK = "bedrock"
 
 
 def get_provider(base_url: str) -> Provider:
@@ -93,7 +94,9 @@ def extract_json_from_codeblock(content: str) -> str:
     return content[first_paren : last_paren + 1]
 
 
-def extract_json_from_stream(chunks: Iterable[str]) -> Generator[str, None, None]:
+def extract_json_from_stream(
+    chunks: Iterable[str],
+) -> Generator[str, None, None]:
     capturing = False
     brace_count = 0
     for chunk in chunks:
@@ -141,23 +144,33 @@ def update_total_usage(
         return None
 
     response_usage = getattr(response, "usage", None)
-    if isinstance(response_usage, OpenAIUsage) and isinstance(total_usage, OpenAIUsage):
+    if isinstance(response_usage, OpenAIUsage) and isinstance(
+        total_usage, OpenAIUsage
+    ):
         total_usage.completion_tokens += response_usage.completion_tokens or 0
         total_usage.prompt_tokens += response_usage.prompt_tokens or 0
         total_usage.total_tokens += response_usage.total_tokens or 0
         if (rtd := response_usage.completion_tokens_details) and (
             ttd := total_usage.completion_tokens_details
         ):
-            ttd.audio_tokens = (ttd.audio_tokens or 0) + (rtd.audio_tokens or 0)
+            ttd.audio_tokens = (ttd.audio_tokens or 0) + (
+                rtd.audio_tokens or 0
+            )
             ttd.reasoning_tokens = (ttd.reasoning_tokens or 0) + (
                 rtd.reasoning_tokens or 0
             )
         if (rpd := response_usage.prompt_tokens_details) and (
             tpd := total_usage.prompt_tokens_details
         ):
-            tpd.audio_tokens = (tpd.audio_tokens or 0) + (rpd.audio_tokens or 0)
-            tpd.cached_tokens = (tpd.cached_tokens or 0) + (rpd.cached_tokens or 0)
-        response.usage = total_usage  # Replace each response usage with the total usage
+            tpd.audio_tokens = (tpd.audio_tokens or 0) + (
+                rpd.audio_tokens or 0
+            )
+            tpd.cached_tokens = (tpd.cached_tokens or 0) + (
+                rpd.cached_tokens or 0
+            )
+        response.usage = (
+            total_usage  # Replace each response usage with the total usage
+        )
         return response
 
     # Anthropic usage.
@@ -186,7 +199,9 @@ def update_total_usage(
     except ImportError:
         pass
 
-    logger.debug("No compatible response.usage found, token usage not updated.")
+    logger.debug(
+        "No compatible response.usage found, token usage not updated."
+    )
     return response
 
 
@@ -227,7 +242,9 @@ def is_async(func: Callable[..., Any]) -> bool:
     return is_coroutine
 
 
-def merge_consecutive_messages(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def merge_consecutive_messages(
+    messages: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
     # merge all consecutive user messages into a single message
     new_messages: list[dict[str, Any]] = []
     # Detect whether all messages have a flat content (i.e. all string)
@@ -239,7 +256,10 @@ def merge_consecutive_messages(messages: list[dict[str, Any]]) -> list[dict[str,
             # If content is not flat, transform it into a list of text
             new_content = [{"type": "text", "text": new_content}]
 
-        if len(new_messages) > 0 and message["role"] == new_messages[-1]["role"]:
+        if (
+            len(new_messages) > 0
+            and message["role"] == new_messages[-1]["role"]
+        ):
             if flat_string:
                 # New content is a string
                 new_messages[-1]["content"] += f"\n\n{new_content}"
@@ -311,7 +331,9 @@ def transform_to_gemini_prompt(
         if messages_gemini:
             messages_gemini[0]["parts"].insert(0, f"*{system_prompt}*")
         else:
-            messages_gemini.append({"role": "user", "parts": [f"*{system_prompt}*"]})
+            messages_gemini.append(
+                {"role": "user", "parts": [f"*{system_prompt}*"]}
+            )
 
     return messages_gemini
 
@@ -353,7 +375,9 @@ def map_to_gemini_function_schema(obj: dict[str, Any]) -> dict[str, Any]:
 
     schema = add_enum_format(schema)
 
-    return FunctionSchema(**schema).model_dump(exclude_none=True, exclude_unset=True)
+    return FunctionSchema(**schema).model_dump(
+        exclude_none=True, exclude_unset=True
+    )
 
 
 def update_gemini_kwargs(kwargs: dict[str, Any]) -> dict[str, Any]:
@@ -428,8 +452,12 @@ def combine_system_messages(
     raise ValueError("Unsupported system message type combination")
 
 
-def extract_system_messages(messages: list[dict[str, Any]]) -> list[SystemMessage]:
-    def convert_message(content: Union[str, dict[str, Any]]) -> SystemMessage:  # noqa: UP007
+def extract_system_messages(
+    messages: list[dict[str, Any]]
+) -> list[SystemMessage]:
+    def convert_message(
+        content: Union[str, dict[str, Any]]
+    ) -> SystemMessage:  # noqa: UP007
         if isinstance(content, str):
             return SystemMessage(type="text", text=content)
         elif isinstance(content, dict):
@@ -441,7 +469,9 @@ def extract_system_messages(messages: list[dict[str, Any]]) -> list[SystemMessag
     for m in messages:
         if m["role"] == "system":
             # System message must always be a string or list of dictionaries
-            content = cast(Union[str, list[dict[str, Any]]], m["content"])  # noqa: UP007
+            content = cast(
+                Union[str, list[dict[str, Any]]], m["content"]
+            )  # noqa: UP007
             if isinstance(content, list):
                 result.extend(convert_message(item) for item in content)
             else:

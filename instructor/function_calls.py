@@ -1,6 +1,7 @@
 # type: ignore
 import json
 import logging
+import re
 from functools import wraps
 from typing import Annotated, Any, Optional, TypeVar, cast
 from docstring_parser import parse
@@ -45,7 +46,9 @@ class OpenAISchema(BaseModel):
         schema = cls.model_json_schema()
         docstring = parse(cls.__doc__ or "")
         parameters = {
-            k: v for k, v in schema.items() if k not in ("title", "description")
+            k: v
+            for k, v in schema.items()
+            if k not in ("title", "description")
         }
         for param in docstring.params:
             if (name := param.arg_name) in parameters["properties"] and (
@@ -55,7 +58,9 @@ class OpenAISchema(BaseModel):
                     parameters["properties"][name]["description"] = description
 
         parameters["required"] = sorted(
-            k for k, v in parameters["properties"].items() if "default" not in v
+            k
+            for k, v in parameters["properties"].items()
+            if "default" not in v
         )
 
         if "description" not in schema:
@@ -88,7 +93,9 @@ class OpenAISchema(BaseModel):
         function = genai_types.FunctionDeclaration(
             name=cls.openai_schema["name"],
             description=cls.openai_schema["description"],
-            parameters=map_to_gemini_function_schema(cls.openai_schema["parameters"]),
+            parameters=map_to_gemini_function_schema(
+                cls.openai_schema["parameters"]
+            ),
         )
         return function
 
@@ -113,31 +120,52 @@ class OpenAISchema(BaseModel):
             cls (OpenAISchema): An instance of the class
         """
         if mode == Mode.ANTHROPIC_TOOLS:
-            return cls.parse_anthropic_tools(completion, validation_context, strict)
+            return cls.parse_anthropic_tools(
+                completion, validation_context, strict
+            )
 
         if mode == Mode.ANTHROPIC_JSON:
-            return cls.parse_anthropic_json(completion, validation_context, strict)
+            return cls.parse_anthropic_json(
+                completion, validation_context, strict
+            )
+
+        if mode == Mode.BEDROCK_JSON:
+            return cls.parse_bedrock_json(
+                completion, validation_context, strict
+            )
 
         if mode in {Mode.VERTEXAI_TOOLS, Mode.GEMINI_TOOLS}:
             return cls.parse_vertexai_tools(completion, validation_context)
 
         if mode == Mode.VERTEXAI_JSON:
-            return cls.parse_vertexai_json(completion, validation_context, strict)
+            return cls.parse_vertexai_json(
+                completion, validation_context, strict
+            )
 
         if mode == Mode.COHERE_TOOLS:
-            return cls.parse_cohere_tools(completion, validation_context, strict)
+            return cls.parse_cohere_tools(
+                completion, validation_context, strict
+            )
 
         if mode == Mode.GEMINI_JSON:
-            return cls.parse_gemini_json(completion, validation_context, strict)
+            return cls.parse_gemini_json(
+                completion, validation_context, strict
+            )
 
         if mode == Mode.GEMINI_TOOLS:
-            return cls.parse_gemini_tools(completion, validation_context, strict)
+            return cls.parse_gemini_tools(
+                completion, validation_context, strict
+            )
 
         if mode == Mode.COHERE_JSON_SCHEMA:
-            return cls.parse_cohere_json_schema(completion, validation_context, strict)
+            return cls.parse_cohere_json_schema(
+                completion, validation_context, strict
+            )
 
         if mode == Mode.WRITER_TOOLS:
-            return cls.parse_writer_tools(completion, validation_context, strict)
+            return cls.parse_writer_tools(
+                completion, validation_context, strict
+            )
 
         if completion.choices[0].finish_reason == "length":
             raise IncompleteOutputException(last_completion=completion)
@@ -190,12 +218,17 @@ class OpenAISchema(BaseModel):
     ) -> BaseModel:
         from anthropic.types import Message
 
-        if isinstance(completion, Message) and completion.stop_reason == "max_tokens":
+        if (
+            isinstance(completion, Message)
+            and completion.stop_reason == "max_tokens"
+        ):
             raise IncompleteOutputException(last_completion=completion)
 
         # Anthropic returns arguments as a dict, dump to json for model validation below
         tool_calls = [
-            json.dumps(c.input) for c in completion.content if c.type == "tool_use"
+            json.dumps(c.input)
+            for c in completion.content
+            if c.type == "tool_use"
         ]  # TODO update with anthropic specific types
 
         tool_calls_validator = TypeAdapter(
@@ -237,7 +270,39 @@ class OpenAISchema(BaseModel):
             # Allow control characters.
             parsed = json.loads(extra_text, strict=False)
             # Pydantic non-strict: https://docs.pydantic.dev/latest/concepts/strict_mode/
-            return cls.model_validate(parsed, context=validation_context, strict=False)
+            return cls.model_validate(
+                parsed, context=validation_context, strict=False
+            )
+
+    @classmethod
+    def parse_bedrock_json(
+        cls: type[BaseModel],
+        completion: Any,
+        validation_context: Optional[dict[str, Any]] = None,
+        strict: Optional[bool] = None,
+    ) -> BaseModel:
+        if isinstance(completion, dict):
+            text = (
+                completion.get("output")
+                .get("message")
+                .get("content")[0]
+                .get("text")
+            )
+
+            match = re.search(r"```?json(.*?)```?", text, re.DOTALL)
+            if match:
+                text = match.group(1).strip()
+
+            text = re.sub(r"```?json|\\n", "", text).strip()
+            # TODO: remove this
+            print(
+                f"instructor.function_calls: parse_bedrock_json: test {text}"
+            )
+        else:
+            text = completion.text
+        return cls.model_validate_json(
+            text, context=validation_context, strict=strict
+        )
 
     @classmethod
     def parse_gemini_json(
@@ -256,7 +321,9 @@ class OpenAISchema(BaseModel):
         try:
             extra_text = extract_json_from_codeblock(text)  # type: ignore
         except UnboundLocalError:
-            raise ValueError("Unable to extract JSON from completion text") from None
+            raise ValueError(
+                "Unable to extract JSON from completion text"
+            ) from None
 
         if strict:
             return cls.model_validate_json(
@@ -266,7 +333,9 @@ class OpenAISchema(BaseModel):
             # Allow control characters.
             parsed = json.loads(extra_text, strict=False)
             # Pydantic non-strict: https://docs.pydantic.dev/latest/concepts/strict_mode/
-            return cls.model_validate(parsed, context=validation_context, strict=False)
+            return cls.model_validate(
+                parsed, context=validation_context, strict=False
+            )
 
     @classmethod
     def parse_vertexai_tools(
@@ -279,7 +348,9 @@ class OpenAISchema(BaseModel):
         for field in tool_call:  # type: ignore
             model[field] = tool_call[field]
         # We enable strict=False because the conversion from protobuf -> dict often results in types like ints being cast to floats, as a result in order for model.validate to work we need to disable strict mode.
-        return cls.model_validate(model, context=validation_context, strict=False)
+        return cls.model_validate(
+            model, context=validation_context, strict=False
+        )
 
     @classmethod
     def parse_vertexai_json(
