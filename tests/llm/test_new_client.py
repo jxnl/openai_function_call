@@ -180,7 +180,6 @@ def test_client_anthropic_response():
     assert user.age == 10
 
 
-@pytest.mark.skip(reason="Skip for now")
 def test_client_anthropic_bedrock_response():
     client = anthropic.AnthropicBedrock(
         aws_access_key=os.getenv("AWS_ACCESS_KEY_ID"),
@@ -222,7 +221,6 @@ async def test_async_client_anthropic_response():
     assert user.age == 10
 
 
-@pytest.mark.skip(reason="Skip for now")
 @pytest.mark.asyncio
 async def test_async_client_anthropic_bedrock_response():
     client = anthropic.AsyncAnthropicBedrock(
