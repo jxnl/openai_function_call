@@ -17,6 +17,11 @@ from instructor.mode import Mode
 
 T = TypeVar("T", bound=OpenAISchema)
 
+class MissingToolCall(Exception):
+    def __init__(self, response: Any, *args: Any) -> None:
+        super().__init__(*args)
+        self.response = response
+
 
 class ParallelBase:
     def __init__(self, *models: type[OpenAISchema]):
@@ -38,6 +43,9 @@ class ParallelBase:
         #! We expect this from the OpenAISchema class, We should address
         #! this with a protocol or an abstract class... @jxnlco
         assert mode == Mode.PARALLEL_TOOLS, "Mode must be PARALLEL_TOOLS"
+        if not response.choices[0].message.tool_calls:
+            raise MissingToolCall(response)
+
         for tool_call in response.choices[0].message.tool_calls:
             name = tool_call.function.name
             arguments = tool_call.function.arguments

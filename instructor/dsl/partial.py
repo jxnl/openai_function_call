@@ -9,8 +9,14 @@
 from __future__ import annotations
 
 from jiter import from_json
-from pydantic import BaseModel, create_model
-from typing import Union
+from pydantic import (
+    BaseModel,
+    ValidationError,
+    ValidatorFunctionWrapHandler,
+    create_model,
+    WrapValidator,
+)
+from typing import Union, Any, Annotated
 import types
 import sys
 from pydantic.fields import FieldInfo
@@ -47,6 +53,20 @@ class PartialLiteralMixin:
     pass
 
 
+class PartialValidator(WrapValidator):
+    def __init__(self, **kwargs: Any):
+        def validate_partial(
+            v: Any,
+            validator: ValidatorFunctionWrapHandler,
+        ) -> Optional[Any]:
+            try:
+                return validator(v)
+            except ValidationError:
+                return None
+
+        super().__init__(func=validate_partial, **kwargs)
+
+
 def _process_generic_arg(
     arg: Any,
     make_fields_optional: bool = False,
@@ -55,13 +75,17 @@ def _process_generic_arg(
     if arg_origin is not None:
         # Handle any nested generic type (Union, List, Dict, etc.)
         nested_args = get_args(arg)
-        modified_nested_args = tuple(
+        modified_nested_args = [
             _process_generic_arg(
                 t,
                 make_fields_optional=make_fields_optional,
             )
             for t in nested_args
-        )
+        ]
+        if make_fields_optional and Partial in modified_nested_args:
+            modified_nested_args.append(PartialValidator())
+
+        modified_nested_args = tuple(modified_nested_args)
         # Special handling for Union types (types.UnionType isn't subscriptable)
         if arg_origin in UNION_ORIGINS:
             return Union[modified_nested_args]  # type: ignore
@@ -94,11 +118,10 @@ def _make_field_optional(
         modified_args = tuple(
             _process_generic_arg(arg, make_fields_optional=True) for arg in generic_args
         )
+        tmp_annotation: Any = Optional[generic_base[modified_args]] if generic_base else None  # type: ignore
 
         # Reconstruct the generic type with modified arguments
-        tmp_field.annotation = (
-            Optional[generic_base[modified_args]] if generic_base else None
-        )
+        tmp_field.annotation = tmp_annotation
         tmp_field.default = None
     # If the field is a BaseModel, then recursively convert it's
     # attributes to optionals.
@@ -108,6 +131,14 @@ def _make_field_optional(
     else:
         tmp_field.annotation = Optional[field.annotation]  # type:ignore
         tmp_field.default = None
+
+    # If a field is annotated with Partial, add the PartialValidator which will
+    # return None if validation fails
+    if Partial in field.metadata:
+        tmp_field.annotation = Annotated[
+            tmp_field.annotation,
+            PartialValidator(),
+        ]  # type:ignore
 
     return tmp_field.annotation, tmp_field  # type: ignore
 
