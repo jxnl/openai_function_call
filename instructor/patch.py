@@ -13,6 +13,7 @@ from typing_extensions import ParamSpec
 from openai import AsyncOpenAI, OpenAI
 from pydantic import BaseModel
 
+from instructor.client import Creation
 from instructor.process_response import handle_response_model
 from instructor.retry import retry_async, retry_sync
 from instructor.utils import is_async
@@ -43,7 +44,7 @@ class InstructorChatCompletionCreate(Protocol):
         max_retries: int | Retrying = 1,
         *args: Any,
         **kwargs: Any,
-    ) -> T_Model: ...
+    ) -> Creation[T_Model]: ...
 
 
 class AsyncInstructorChatCompletionCreate(Protocol):
@@ -55,7 +56,7 @@ class AsyncInstructorChatCompletionCreate(Protocol):
         max_retries: int | AsyncRetrying = 1,
         *args: Any,
         **kwargs: Any,
-    ) -> T_Model: ...
+    ) -> Creation[T_Model]: ...
 
 
 def handle_context(
@@ -150,7 +151,7 @@ def patch(  # type: ignore
         hooks: Hooks | None = None,
         *args: T_ParamSpec.args,
         **kwargs: T_ParamSpec.kwargs,
-    ) -> T_Model:
+    ) -> Creation[T_Model]:
         context = handle_context(context, validation_context)
 
         response_model, new_kwargs = handle_response_model(
@@ -181,7 +182,7 @@ def patch(  # type: ignore
         hooks: Hooks | None = None,
         *args: T_ParamSpec.args,
         **kwargs: T_ParamSpec.kwargs,
-    ) -> T_Model:
+    ) -> Creation[T_Model]:
         context = handle_context(context, validation_context)
 
         response_model, new_kwargs = handle_response_model(

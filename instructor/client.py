@@ -11,6 +11,7 @@ from typing import (
     overload,
     Union,
     Literal,
+    Generic,
     Any,
 )
 from tenacity import (
@@ -27,6 +28,14 @@ from instructor.hooks import Hooks, HookName
 T = TypeVar("T", bound=Union[BaseModel, "Iterable[Any]", "Partial[Any]"])
 
 
+class Creation(Generic[T]):
+    raw: Any # should be uniform completion type
+    processed: T
+
+    def __init__(self, raw: Any, processed: T) -> None:
+        self.raw, self.processed = raw, processed
+
+
 class Instructor:
     client: Any | None
     create_fn: Callable[..., Any]
@@ -38,7 +47,7 @@ class Instructor:
     def __init__(
         self,
         client: Any | None,
-        create: Callable[..., Any],
+        create: Callable[..., Creation[T]],
         mode: instructor.Mode = instructor.Mode.TOOLS,
         provider: Provider = Provider.OPENAI,
         hooks: Hooks | None = None,
@@ -173,7 +182,7 @@ class Instructor:
     ) -> T | Any | Awaitable[T] | Awaitable[Any]:
         kwargs = self.handle_kwargs(kwargs)
 
-        return self.create_fn(
+        creation: Creation[T] = self.create_fn(
             response_model=response_model,
             messages=messages,
             max_retries=max_retries,
@@ -183,6 +192,7 @@ class Instructor:
             hooks=self.hooks,
             **kwargs,
         )
+        return creation.processed
 
     @overload
     def create_partial(
@@ -223,7 +233,7 @@ class Instructor:
         kwargs = self.handle_kwargs(kwargs)
 
         response_model = instructor.Partial[response_model]  # type: ignore
-        return self.create_fn(
+        creation: Creation[Generator[T, None, None]] = self.create_fn(
             messages=messages,
             response_model=response_model,
             max_retries=max_retries,
@@ -233,6 +243,7 @@ class Instructor:
             hooks=self.hooks,
             **kwargs,
         )
+        return creation.processed
 
     @overload
     def create_iterable(
@@ -272,7 +283,7 @@ class Instructor:
         kwargs = self.handle_kwargs(kwargs)
 
         response_model = Iterable[response_model]  # type: ignore
-        return self.create_fn(
+        creation: Creation[Generator[T, None, None]] = self.create_fn(
             messages=messages,
             response_model=response_model,
             max_retries=max_retries,
@@ -282,6 +293,7 @@ class Instructor:
             hooks=self.hooks,
             **kwargs,
         )
+        return creation.processed
 
     @overload
     def create_with_completion(
@@ -318,7 +330,7 @@ class Instructor:
         **kwargs: Any,
     ) -> tuple[T, Any] | Awaitable[tuple[T, Any]]:
         kwargs = self.handle_kwargs(kwargs)
-        model = self.create_fn(
+        creation: Creation[T] = self.create_fn(
             messages=messages,
             response_model=response_model,
             max_retries=max_retries,
@@ -328,7 +340,7 @@ class Instructor:
             hooks=self.hooks,
             **kwargs,
         )
-        return model, model._raw_response
+        return creation.processed, creation.raw
 
     def handle_kwargs(self, kwargs: dict[str, Any]) -> dict[str, Any]:
         """
@@ -360,7 +372,7 @@ class AsyncInstructor(Instructor):
     def __init__(
         self,
         client: Any | None,
-        create: Callable[..., Any],
+        create: Callable[..., Creation[T]],
         mode: instructor.Mode = instructor.Mode.TOOLS,
         provider: Provider = Provider.OPENAI,
         hooks: Hooks | None = None,
@@ -384,7 +396,7 @@ class AsyncInstructor(Instructor):
         **kwargs: Any,
     ) -> T | Any:
         kwargs = self.handle_kwargs(kwargs)
-        return await self.create_fn(
+        creation: Creation[T] = await self.create_fn(
             response_model=response_model,
             validation_context=validation_context,
             context=context,
@@ -394,6 +406,7 @@ class AsyncInstructor(Instructor):
             hooks=self.hooks,
             **kwargs,
         )
+        return creation.processed
 
     async def create_partial(  # type: ignore[override]
         self,
@@ -407,7 +420,7 @@ class AsyncInstructor(Instructor):
     ) -> AsyncGenerator[T, None]:
         kwargs = self.handle_kwargs(kwargs)
         kwargs["stream"] = True
-        async for item in await self.create_fn(
+        creation: Creation[AsyncGenerator[T, None]] = await self.create_fn( # type: ignore 
             response_model=instructor.Partial[response_model],  # type: ignore
             validation_context=validation_context,
             context=context,
@@ -416,7 +429,8 @@ class AsyncInstructor(Instructor):
             strict=strict,
             hooks=self.hooks,
             **kwargs,
-        ):
+        )
+        async for item in creation.processed:
             yield item
 
     async def create_iterable(  # type: ignore[override]
@@ -431,7 +445,7 @@ class AsyncInstructor(Instructor):
     ) -> AsyncGenerator[T, None]:
         kwargs = self.handle_kwargs(kwargs)
         kwargs["stream"] = True
-        async for item in await self.create_fn(
+        async for creation in await self.create_fn(
             response_model=Iterable[response_model],
             validation_context=validation_context,
             context=context,
@@ -441,6 +455,8 @@ class AsyncInstructor(Instructor):
             hooks=self.hooks,
             **kwargs,
         ):
+            creation: Creation[T]
+            item = creation.processed
             yield item
 
     async def create_with_completion(  # type: ignore[override]
@@ -454,7 +470,7 @@ class AsyncInstructor(Instructor):
         **kwargs: Any,
     ) -> tuple[T, Any]:
         kwargs = self.handle_kwargs(kwargs)
-        response = await self.create_fn(
+        creation: Creation[T] = await self.create_fn(
             response_model=response_model,
             validation_context=validation_context,
             context=context,
@@ -464,7 +480,7 @@ class AsyncInstructor(Instructor):
             hooks=self.hooks,
             **kwargs,
         )
-        return response, response._raw_response
+        return creation.processed, creation.raw
 
 
 @overload

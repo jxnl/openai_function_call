@@ -6,6 +6,7 @@ import logging
 from json import JSONDecodeError
 from typing import Any, Callable, TypeVar
 
+from instructor.client import Creation
 from instructor.exceptions import InstructorRetryException
 from instructor.hooks import Hooks
 from instructor.mode import Mode
@@ -121,7 +122,7 @@ def retry_sync(
     strict: bool | None = None,
     mode: Mode = Mode.TOOLS,
     hooks: Hooks | None = None,
-) -> T_Model | None:
+) -> Creation[T_Model] | None:
     """
     Retry a synchronous function upon specified exceptions.
 
@@ -158,7 +159,7 @@ def retry_sync(
                     response = update_total_usage(
                         response=response, total_usage=total_usage
                     )
-                    return process_response(  # type: ignore
+                    processed = process_response(  # type: ignore
                         response=response,
                         response_model=response_model,
                         validation_context=context,
@@ -166,6 +167,7 @@ def retry_sync(
                         mode=mode,
                         stream=kwargs.get("stream", False),
                     )
+                    return Creation(processed=processed, raw=response)
                 except (ValidationError, JSONDecodeError) as e:
                     logger.debug(f"Parse error: {e}")
                     hooks.emit_parse_error(e)
@@ -201,7 +203,7 @@ async def retry_async(
     strict: bool | None = None,
     mode: Mode = Mode.TOOLS,
     hooks: Hooks | None = None,
-) -> T_Model | None:
+) -> Creation[T_Model] | None:
     """
     Retry an asynchronous function upon specified exceptions.
 
@@ -239,7 +241,7 @@ async def retry_async(
                         response=response, total_usage=total_usage
                     )
 
-                    return await process_response_async(
+                    processed = await process_response_async(
                         response=response,
                         response_model=response_model,
                         validation_context=context,
@@ -247,6 +249,7 @@ async def retry_async(
                         mode=mode,
                         stream=kwargs.get("stream", False),
                     )
+                    return Creation(processed=processed, raw=response)
                 except (ValidationError, JSONDecodeError, AsyncValidationError) as e:
                     logger.debug(f"Parse error: {e}")
                     hooks.emit_parse_error(e)
