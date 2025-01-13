@@ -47,6 +47,7 @@ class Provider(Enum):
     ANYSCALE = "anyscale"
     TOGETHER = "together"
     GROQ = "groq"
+    SAMBANOVA = "sambanova"
     MISTRAL = "mistral"
     COHERE = "cohere"
     GEMINI = "gemini"

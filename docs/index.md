@@ -325,6 +325,42 @@ If you want to see all the integrations, check out the [integrations guide](./in
 
     [See more :material-arrow-right:](./integrations/groq.md){: .md-button }
 
+=== "Sambanova"
+    ```bash
+    pip install "instructor[sambanova]"
+
+    export SAMBANOVA_API_KEY="your-sambanova-cloud-api-key"
+    export SAMBANOVA_URL="sambanova-cloud-url"
+    ```
+
+    ```python
+    import instructor
+    from openai import OpenAI
+    from pydantic import BaseModel
+
+    client = instructor.from_sambanova(
+        OpenAI(    
+            api_key=os.environ.get("SAMBANOVA_API_KEY"),
+            base_url=os.getenv("SAMBANOVA_URL")
+        )
+    )
+
+    class ExtractUser(BaseModel):
+        name: str
+        age: int
+
+    resp = client.chat.completions.create(
+        model="llama3-405b",
+        response_model=ExtractUser,
+        messages=[{"role": "user", "content": "Extract Jason is 25 years old."}],
+    )
+
+    assert resp.name == "Jason"
+    assert resp.age == 25
+    ```
+
+    [See more :material-arrow-right:](./integrations/sambanova.md){: .md-button }
+
 === "Litellm"
     ```bash
     pip install "instructor[litellm]"

@@ -25,6 +25,7 @@ Instructor supports a wide range of AI model providers, each with their own capa
 - [Vertex AI](./vertex.md) - Google Cloud's AI platform
 - [Cohere](./cohere.md) - Command-R and other Cohere models
 - [Groq](./groq.md) - High-performance inference platform
+- [SambaNova](./sambanova.md) - Fast, low-cost, and structured AI responses.
 - [Mistral](./mistral.md) - Mistral's hosted models
 - [Fireworks](./fireworks.md) - High-performance model inference
 - [Cerebras](./cerebras.md) - Llama-3-70B and other Open Source Models at blazing fast inference speeds

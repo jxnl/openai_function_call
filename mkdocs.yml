@@ -163,6 +163,7 @@ nav:
     - "Structured Output with watsonx.ai": 'examples/watsonx.md'
     - "OpenAI Batch Jobs with Instructor": 'examples/batch_job_oai.md'
     - "Structured Outputs with Groq": 'examples/groq.md'
+    - "Structured Outputs with Sambanova": 'examples/sambanova.md'
     - "Structured Outputs with Mistral": 'examples/mistral.md'
     - "Action Items Extraction": 'examples/action_items.md'
     - "Batch Classification with LangSmith": 'examples/batch_classification_langsmith.md'
@@ -217,6 +218,7 @@ nav:
     - Fireworks: 'integrations/fireworks.md'
     - Gemini: 'integrations/google.md'
     - Groq: 'integrations/groq.md'
+    - Sambanova: 'integrations/sambanova.md'
     - LiteLLM: 'integrations/litellm.md'
     - llama-cpp-python: 'integrations/llama-cpp-python.md'
     - Mistral: 'integrations/mistral.md'
@@ -317,6 +319,7 @@ plugins:
          hub/fireworks.md: integrations/fireworks.md
          hub/google.md: integrations/google.md
          hub/groq.md: integrations/groq.md
+         hub/sambanova.md: integrations/sambanova.md
          hub/litellm.md: integrations/litellm.md
          hub/mistral.md: integrations/mistral.md
          hub/openai.md: integrations/openai.md
@@ -334,6 +337,7 @@ plugins:
          'hub/clients/cohere.md': 'integrations/cohere.md'
          'hub/clients/fireworks.md': 'integrations/fireworks.md'
          'hub/clients/groq.md': 'integrations/groq.md'
+         'hub/clients/sambanova.md': 'integrations/sambanova.md'
          'hub/clients/mistral.md': 'integrations/mistral.md'
          'hub/clients/openai.md': 'integrations/openai.md'
          'hub/clients/together.md': 'integrations/together.md'

@@ -365,6 +365,10 @@ class OpenAISchema(BaseModel):
         assert (
             tool_call.function.name == cls.openai_schema["name"]  # type: ignore[index]
         ), "Tool name does not match"
+        
+        if isinstance(tool_call.function.arguments, dict):
+            tool_call.function.arguments = json.dumps(tool_call.function.arguments)
+        
         return cls.model_validate_json(
             tool_call.function.arguments,  # type: ignore
             context=validation_context,

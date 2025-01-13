@@ -27,23 +27,24 @@ Welcome to our collection of cookbooks showcasing the power of structured output
 16. [LLM-Based Document Segmentation](document_segmentation.md): Intelligently divide long documents into meaningful sections.
 17. [Cost Optimization with OpenAI's Batch API](batch_job_oai.md): Reduce API costs by processing multiple requests efficiently.
 18. [Groq Cloud API Integration](groq.md): Leverage Groq's high-performance AI inference platform.
-19. [Mistral and Mixtral Model Usage](mistral.md): Implement state-of-the-art open-source language models in your projects.
-20. [Multi-Modal AI with Gemini](multi_modal_gemini.md): Process and analyze text, images, and other data types simultaneously.
-21. [IBM watsonx.ai Integration](watsonx.md): Utilize IBM's enterprise AI platform for advanced language processing tasks.
-22. [Receipt Information Extraction with GPT-4 Vision](extracting_receipts.md): Extract structured data from receipt images using advanced AI vision capabilities.
-23. [Slide Content Extraction with GPT-4 Vision](extract_slides.md): Convert presentation slide images into structured, analyzable text data.
-24. [Few-Shot Learning with Examples](examples.md): Improve AI model performance by providing contextual examples in prompts.
-25. [Local Classification without API](local_classification.md): Perform text classification tasks locally without relying on external API calls.
-26. [Action Items Extraction](action_items.md): Extract structured action items and tasks from text content.
-27. [Batch Classification with LangSmith](batch_classification_langsmith.md): Efficiently classify content in batches using LangSmith integration.
-28. [Contact Information Extraction](extract_contact_info.md): Extract structured contact details from unstructured text.
-29. [Knowledge Graph Building](building_knowledge_graph.md): Create and manipulate knowledge graphs from textual data.
-30. [Multiple Classification Tasks](multiple_classification.md): Handle multiple classification categories simultaneously.
-31. [Pandas DataFrame Integration](pandas_df.md): Work with structured data using Pandas DataFrames.
-32. [Partial Response Streaming](partial_streaming.md): Stream partial results for real-time processing.
-33. [Single Classification Tasks](single_classification.md): Implement focused single-category classification.
-34. [Table Extraction from Images](tables_from_vision.md): Convert visual tables into structured data formats.
-35. [YouTube Clip Analysis](youtube_clips.md): Extract and analyze information from YouTube video clips.
+19. [SambaNova Cloud API Integration](sambanova.md): Generate fast, low-cost, and structured AI responses.
+20. [Mistral and Mixtral Model Usage](mistral.md): Implement state-of-the-art open-source language models in your projects.
+21. [Multi-Modal AI with Gemini](multi_modal_gemini.md): Process and analyze text, images, and other data types simultaneously.
+22. [IBM watsonx.ai Integration](watsonx.md): Utilize IBM's enterprise AI platform for advanced language processing tasks.
+23. [Receipt Information Extraction with GPT-4 Vision](extracting_receipts.md): Extract structured data from receipt images using advanced AI vision capabilities.
+24. [Slide Content Extraction with GPT-4 Vision](extract_slides.md): Convert presentation slide images into structured, analyzable text data.
+25. [Few-Shot Learning with Examples](examples.md): Improve AI model performance by providing contextual examples in prompts.
+26. [Local Classification without API](local_classification.md): Perform text classification tasks locally without relying on external API calls.
+27. [Action Items Extraction](action_items.md): Extract structured action items and tasks from text content.
+28. [Batch Classification with LangSmith](batch_classification_langsmith.md): Efficiently classify content in batches using LangSmith integration.
+29. [Contact Information Extraction](extract_contact_info.md): Extract structured contact details from unstructured text.
+30. [Knowledge Graph Building](building_knowledge_graph.md): Create and manipulate knowledge graphs from textual data.
+31. [Multiple Classification Tasks](multiple_classification.md): Handle multiple classification categories simultaneously.
+32. [Pandas DataFrame Integration](pandas_df.md): Work with structured data using Pandas DataFrames.
+33. [Partial Response Streaming](partial_streaming.md): Stream partial results for real-time processing.
+34. [Single Classification Tasks](single_classification.md): Implement focused single-category classification.
+35. [Table Extraction from Images](tables_from_vision.md): Convert visual tables into structured data formats.
+36. [YouTube Clip Analysis](youtube_clips.md): Extract and analyze information from YouTube video clips.
 
 ## Subscribe to our Newsletter for Updates and Tips
 

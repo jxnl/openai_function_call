@@ -182,6 +182,66 @@ print(user)
 #> name='jason' age=25
 ```
 
+### Sambanova
+
+[SambaNova Cloud](https://cloud.sambanova.ai/) and [SambaStudio](https://docs.sambanova.ai/sambastudio/latest/sambastudio-intro.html) are the two main Samabanova Systems platforms for using generative and powerful Large Language Models (LLMs) and more! [SambaNova Cloud](https://cloud.sambanova.ai/) is a high-performance inference service that delivers rapid and precise results. Likewise, [SambaStudio](https://docs.sambanova.ai/sambastudio/latest/sambastudio-intro.html) is a rich, GUI-based platform that provides the functionality to train, deploy, and manage models. Check the docs and decide whether SambaNova Cloud or SambaStudio are the best fit for you. Here is the way to use them:
+
+```bash
+export SAMBANOVA_API_KEY="your-sambanova-cloud-api-key"
+export SAMBANOVA_URL="sambanova-cloud-url"
+
+export SAMBASTUDIO_API_KEY="your-sambastudio-api-key"
+export SAMBASTUDIO_URL="sambastudio-url"
+```
+
+```python
+import os
+from pydantic import BaseModel
+
+import openai
+import instructor
+
+
+# SambaNova Cloud client
+sncloud_client = openai.OpenAI(
+    api_key=os.environ.get("SAMBANOVA_API_KEY"),
+    base_url=os.getenv("SAMBANOVA_URL"),
+)
+
+# SambaStudio client
+sambastudio_client = openai.OpenAI(
+    api_key=os.environ.get("SAMBASTUDIO_API_KEY"),
+    base_url=os.getenv("SAMBASTUDIO_URL"),
+)
+
+# By default, the patch function will patch the ChatCompletion.create and ChatCompletion.create methods
+# to support the response_model parameter
+# You can use either SambaNova Cloud or SambaStudio as your prefered LLM client
+client = instructor.from_sambanova(sncloud_client, mode=instructor.Mode.TOOLS)
+# client = instructor.from_sambanova(sambastudio_client, mode=instructor.Mode.TOOLS)
+
+
+# Now, we can use the response_model parameter using only a base model
+# rather than having to use the OpenAISchema class
+class UserExtract(BaseModel):
+    name: str
+    age: int
+
+
+user: UserExtract = client.chat.completions.create(
+    model="llama3-405b",
+    response_model=UserExtract,
+    messages=[
+        {"role": "user", "content": "Extract jason is 25 years old"},
+    ],
+)
+
+assert isinstance(user, UserExtract), "Should be instance of UserExtract"
+
+print(user)
+#> name='jason' age=25
+```
+
 ### Together AI
 
 Together AI, when combined with Instructor, offers a seamless experience for developers looking to leverage structured outputs in their applications. For more details, refer to our [Together AI documentation](../../integrations/together.md) and explore the [patching guide](../../concepts/patching.md) to enhance your applications.

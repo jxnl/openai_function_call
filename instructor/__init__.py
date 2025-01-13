@@ -96,3 +96,9 @@ if importlib.util.find_spec("writerai") is not None:
     from .client_writer import from_writer
 
     __all__ += ["from_writer"]
+    
+if importlib.util.find_spec("openai") is not None:
+    print('sambanova')
+    from .client_sambanova import from_sambanova
+
+    __all__ += ["from_sambanova"]
