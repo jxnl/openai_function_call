@@ -152,6 +152,8 @@ def update_total_usage(
             ttd.reasoning_tokens = (ttd.reasoning_tokens or 0) + (
                 rtd.reasoning_tokens or 0
             )
+            ttd.accepted_prediction_tokens = (ttd.accepted_prediction_tokens or 0) + (rtd.accepted_prediction_tokens or 0)
+            ttd.rejected_prediction_tokens = (ttd.rejected_prediction_tokens or 0) + (rtd.rejected_prediction_tokens or 0)
         if (rpd := response_usage.prompt_tokens_details) and (
             tpd := total_usage.prompt_tokens_details
         ):
